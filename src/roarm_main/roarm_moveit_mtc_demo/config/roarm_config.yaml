@@ -1,0 +1,137 @@
+/**:
+  ros__parameters:
+    # Total planning attempts
+    max_solutions: 15
+    execute: true
+
+    # Planning group and link names
+    arm_group_name: "hand"
+    eef_name: "gripper"
+    hand_group_name: "gripper"
+    hand_frame: "hand_tcp"
+
+    # Poses
+    hand_open_pose: "open"
+    hand_close_pose: "close"
+    arm_home_pose: "home"
+
+    # Scene frames
+    world_frame: "world"
+    table_reference_frame: "world"
+    object_reference_frame: "world"
+    surface_link: "table"
+
+    # Collision object for picking
+    # CYLINDER object specifications
+
+    # object_name: "object"
+    # object_dimensions: [0.08, 0.02] # [height, radius]
+    # object_pose: [0.15, -0.3, 0.09, 0.0, 0.0, 0.0]
+
+    object_names:
+      - object1
+      - object2
+      - object3
+      - object4
+      - object5
+      - object6
+      - object7
+      - object8
+      # - object9
+      # - object10
+
+    # # Box dimensions = [x, y, z] → length, width, height
+    # object_dimensions_1: [0.02, 0.04, 0.08]
+    # object_dimensions_2: [0.02, 0.04, 0.08]
+    # object_dimensions_3: [0.02, 0.04, 0.08]
+    # object_dimensions_4: [0.02, 0.04, 0.08]
+    # object_dimensions_5: [0.02, 0.04, 0.08]
+    # object_dimensions_6: [0.02, 0.04, 0.08]
+    # object_dimensions_7: [0.02, 0.04, 0.08]
+    # object_dimensions_8: [0.02, 0.04, 0.08]
+    # object_dimensions_9: [0.02, 0.04, 0.08]
+    # object_dimensions_10: [0.02, 0.04, 0.08]
+
+
+    # Box dimensions = [x, y, z] → length, width, height
+    object_dimensions_1: [0.01, 0.07, 0.11]
+    object_dimensions_2: [0.01, 0.07, 0.11]
+    object_dimensions_3: [0.01, 0.07, 0.11]
+    object_dimensions_4: [0.01, 0.07, 0.11]
+    object_dimensions_5: [0.01, 0.07, 0.11]
+    object_dimensions_6: [0.01, 0.07, 0.11]
+    object_dimensions_7: [0.01, 0.07, 0.11]
+    object_dimensions_8: [0.01, 0.07, 0.11]
+    # object_dimensions_9: [0.01, 0.07, 0.11]
+    # object_dimensions_10: [0.01, 0.07, 0.11]
+
+
+
+    # object_pose_1:  [0.15, -0.3, 0.09, 0.0, 1.5708, 0.0]
+    # object_pose_2:  [0.15, 0.3, 0.09, 0.0, 1.5708, 0.0]
+    # object_pose_3:  [0.22, -0.22, 0.09, 0.0, 1.5708, 0.0]
+    # object_pose_4:  [0.22, 0.22, 0.09, 0.0, 1.5708, 0.0]
+    # object_pose_5:  [0.27, -0.3, 0.09, 0.0, 1.5708, 0.0]
+    # object_pose_6:  [0.27, 0.3, 0.09, 0.0, 1.5708, 0.0]
+    # object_pose_7:  [0.32, -0.22, 0.09, 0.0, 1.5708, 0.0]
+    # object_pose_8:  [0.32, 0.22, 0.09, 0.0, 1.5708, 0.0]
+    # object_pose_9:  [0.37, -0.3, 0.09, 0.0, 1.5708, 0.0]
+    # object_pose_10: [0.37, 0.3, 0.09, 0.0, 1.5708, 0.0]
+
+    object_pose_1:  [0.16, -0.29, 0.14, 0.0, 0.0, 0.785]     # in a Column
+    object_pose_2:  [0.15,  0.3, 0.14, 0.0, 0.0, -0.785]
+    object_pose_3:  [0.23, -0.29, 0.14, 0.0, 0.0, 0.785]
+    object_pose_4:  [0.219,  0.3, 0.14, 0.0, 0.0, -0.785]
+    object_pose_5:  [0.32, -0.29, 0.14, 0.0, 0.0, 0.785]
+    object_pose_6:  [0.31,  0.3, 0.14, 0.0, 0.0, -0.785]
+    object_pose_7:  [0.42, -0.3, 0.14, 0.0, 0.0, 0.785]
+    object_pose_8:  [0.41,  0.32, 0.14, 0.0, 0.0, -0.785]
+
+    # object_pose_1:  [0.16, -0.29, 0.14, 0.0, 0.0, 0.785]     # in a Column
+    # object_pose_2:  [0.15,  0.3, 0.14, 0.0, 0.0, -0.785]
+    # object_pose_3:  [0.23, -0.29, 0.14, 0.0, 0.0, 0.785]
+    # object_pose_4:  [0.21,  0.3, 0.14, 0.0, 0.0, -0.785]
+    # object_pose_5:  [0.32, -0.29, 0.14, 0.0, 0.0, 0.785]
+    # object_pose_6:  [0.31,  0.3, 0.14, 0.0, 0.0, -0.785]
+    # object_pose_7:  [0.41, -0.29, 0.14, 0.0, 0.0, 0.785]
+    # object_pose_8:  [0.39,  0.3, 0.14, 0.0, 0.0, -0.785]
+
+
+
+    # object_pose_9:  [0.43, -0.3 , 0.14, 0.0, 0.0, 0.785]
+    # object_pose_10: [0.43,  0.3, 0.14, 0.0, 0.0, -0.785]
+
+    # object_pose_1:  [0.15, -0.3, 0.12, 0.0, 0.0,  0.785]
+    # object_pose_2:  [0.15,  0.3, 0.12, 0.0, 0.0, -0.785]
+    # object_pose_3:  [0.21, -0.22, 0.12, 0.0, 0.0,  0.785]
+    # object_pose_4:  [0.21,  0.22, 0.12, 0.0, 0.0, -0.785]
+    # object_pose_5:  [0.27, -0.3,  0.12, 0.0, 0.0,  0.785]
+    # object_pose_6:  [0.27,  0.3,  0.12, 0.0, 0.0, -0.785]
+    # object_pose_7:  [0.32, -0.22, 0.12, 0.0, 0.0,  0.785]
+    # object_pose_8:  [0.32,  0.22, 0.12, 0.0, 0.0, -0.785]
+    # object_pose_9:  [0.38, -0.3,  0.12, 0.0, 0.0,  0.785]
+    # object_pose_10: [0.38,  0.3,  0.12, 0.0, 0.0, -0.785]
+
+
+
+
+    # Table model
+    spawn_table: true
+    table_name: "table"
+    table_dimensions: [0.5, 0.7, 0.08]  # [length, width, height]
+    table_pose: [0.34, 0.0, 0.08, 0.0, 0.0, 0.0]
+
+    # Gripper grasp frame transform [x,y,z,r,p,y]
+    grasp_frame_transform: [-0.01, 0.0, 0.0, 0.0, 0.0, 0.0]
+
+    # Place pose [x,y,z,r,p,y]
+    place_pose: [0.4, 0.0, 0.3, 0.0, 0.0, 0.0]
+    place_surface_offset: 0.0001 # place offset from table
+
+    # Valid distance range when approaching an object for picking
+    approach_object_min_dist: 0.03
+    approach_object_max_dist: 0.1
+
+    # Valid height range when lifting an object after pick
+    lift_object_min_dist: 0.01
+    lift_object_max_dist: 0.25

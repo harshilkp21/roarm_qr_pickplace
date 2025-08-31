@@ -1,0 +1,285 @@
+// ROS
+#include <rclcpp/rclcpp.hpp>
+#include <std_msgs/msg/string.hpp>
+
+// MTC pick/place demo implementation
+#include <roarm_moveit_mtc_demo/pick_place_task.h>
+#include "pick_place_parameters.hpp"
+
+#include <tf2/LinearMath/Quaternion.h>
+#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
+
+
+// C++ Utilities
+#include <chrono>
+#include <thread>
+
+bool task_executed = false;
+size_t object_idx = 0; // Start from object 0
+
+constexpr int delay_seconds = 5; // Delay in seconds after execution before re-planning
+
+
+static const rclcpp::Logger LOGGER = rclcpp::get_logger("roarm_moveit_mtc_demo");
+
+int main(int argc, char** argv) {
+
+    rclcpp::init(argc, argv);
+    rclcpp::NodeOptions node_options;
+    node_options.automatically_declare_parameters_from_overrides(true);
+    auto node = rclcpp::Node::make_shared("roarm_moveit_mtc_demo", node_options);
+
+    // Spin in a background thread
+    std::thread spinning_thread([node] { rclcpp::spin(node); });
+
+    // Setup parameter listener and scene
+    const auto param_listener = std::make_shared<pick_place_task_demo::ParamListener>(node);
+    const auto params = param_listener->get_params();
+    roarm_moveit_mtc_demo::setupDemoScene(params);
+
+	
+    // // Setup pick/place task
+    // roarm_moveit_mtc_demo::PickPlaceTask pick_place_task("pick_place_task");
+    // if (!pick_place_task.init(node, params)) {
+    //     RCLCPP_ERROR(LOGGER, "Initialization failed");
+    //     return 1;
+    // }
+
+    // // Plan task
+    // if (pick_place_task.plan(params.max_solutions)) {
+    //     RCLCPP_INFO(LOGGER, "Initial planning succeeded. Waiting for gesture command...");
+    // } else {
+    //     RCLCPP_ERROR(LOGGER, "Initial planning failed. Exiting.");
+    //     return 1;
+    // }
+
+	
+	
+
+    // Subscribe to gesture command
+    // auto sub = node->create_subscription<std_msgs::msg::String>(
+    //     "pick",
+    //     10,
+    //     [&pick_place_task, &params, &node](const std_msgs::msg::String::SharedPtr msg) {
+
+	auto sub = node->create_subscription<std_msgs::msg::String>(
+    		"pick",
+    		10,
+    		[&params, &node](const std_msgs::msg::String::SharedPtr msg) {
+
+            if (msg->data == "pick" && !task_executed) {
+                RCLCPP_INFO(LOGGER, "Gesture 'open_palm_detected' received. Executing pick/place task...");
+                task_executed = true;
+
+                // std::thread task_thread([&pick_place_task, &params, node]() {
+                //     pick_place_task.execute();
+                //     RCLCPP_INFO(LOGGER, "Task execution complete.");
+
+                //     // Wait for the defined delay
+                //     std::this_thread::sleep_for(std::chrono::seconds(delay_seconds));
+                    
+                //     //added here rn
+                //     auto pub = node->create_publisher<std_msgs::msg::String>("resume_scanner", 10);
+                //     std_msgs::msg::String msg;
+                //     msg.data = "resume";
+                //     pub->publish(msg);
+                //     ///
+                    
+                //     // Re-plan task for the next trigger
+                //     RCLCPP_INFO(LOGGER, "Re-planning pick/place task...");
+                //     if (pick_place_task.plan(params.max_solutions)) {
+                //         RCLCPP_INFO(LOGGER, "Re-planning succeeded. Ready for next gesture.");
+                //     } else {
+                //         RCLCPP_ERROR(LOGGER, "Re-planning failed. Next trigger will retry planning.");
+                //     }
+
+                //     task_executed = false;
+                // });
+
+				std::thread task_thread([&params, node]() {
+				// Get object name by index
+				
+				// no respawning (old code)
+				
+				// if (object_idx >= params.object_names.size()) {
+				// 	RCLCPP_ERROR(LOGGER, "No more objects to pick (object_idx=%d).", object_idx);
+				// 	task_executed = false;
+				// 	return;
+				// }
+				
+				// respawning(new code)
+
+				if (object_idx >= params.object_names.size()) {
+				RCLCPP_INFO(LOGGER, "All objects have been picked and placed. Respawning them...");
+
+				// Re-add all objects to the planning scene
+				auto planning_scene_publisher = node->create_publisher<moveit_msgs::msg::PlanningScene>("planning_scene", 10);
+				rclcpp::sleep_for(std::chrono::milliseconds(500));
+
+				moveit_msgs::msg::PlanningScene planning_scene_msg;
+				planning_scene_msg.is_diff = true;
+
+				for (size_t i = 0; i < params.object_names.size(); ++i) {
+					moveit_msgs::msg::CollisionObject obj;
+					obj.id = params.object_names[i];
+					obj.header.frame_id = "world";
+					obj.operation = obj.ADD;
+
+					// Add the shape
+					obj.primitives.resize(1);
+					obj.primitives[0].type = shape_msgs::msg::SolidPrimitive::BOX;
+
+					// Select dimensions per index
+					std::vector<double> dims;
+					switch (i) {
+						case 0: dims = params.object_dimensions_1; break;
+						case 1: dims = params.object_dimensions_2; break;
+						case 2: dims = params.object_dimensions_3; break;
+						case 3: dims = params.object_dimensions_4; break;
+						case 4: dims = params.object_dimensions_5; break;
+						case 5: dims = params.object_dimensions_6; break;
+						case 6: dims = params.object_dimensions_7; break;
+						case 7: dims = params.object_dimensions_8; break;
+						case 8: dims = params.object_dimensions_9; break;
+						case 9: dims = params.object_dimensions_10; break;
+						default:
+							RCLCPP_ERROR(LOGGER, "Invalid object index %ld in respawn loop.", i);
+							continue;
+					}
+
+					// ✅ Validate size of dims
+					if (dims.size() != 3) {
+						RCLCPP_ERROR(LOGGER, "Invalid dimensions for object index %ld. Expected 3 values for BOX. Got: %ld", i, dims.size());
+						continue;
+					}
+
+					// ✅ Validate positive dimensions
+					bool valid_dims = true;
+					for (size_t di = 0; di < dims.size(); ++di) {
+						if (dims[di] <= 0.0) {
+							RCLCPP_ERROR(LOGGER, "Invalid dimension[%ld] = %f for object index %ld", di, dims[di], i);
+							valid_dims = false;
+						}
+					}
+					if (!valid_dims) {
+						continue;
+					}
+
+					// ✅ Now safely assign the box shape and dimensions
+					obj.primitives.resize(1);
+					obj.primitives[0].type = shape_msgs::msg::SolidPrimitive::BOX;
+					obj.primitives[0].dimensions.clear();
+					for (const auto& d : dims) {
+						obj.primitives[0].dimensions.push_back(d);
+						RCLCPP_INFO(LOGGER, "Object %s dimensions: [%f, %f, %f]",
+						obj.id.c_str(), dims[0], dims[1], dims[2]);
+					}
+
+
+					// Select pose per index
+					std::vector<double> pose_v;
+					switch (i) {
+						case 0: pose_v = params.object_pose_1; break;
+						case 1: pose_v = params.object_pose_2; break;
+						case 2: pose_v = params.object_pose_3; break;
+						case 3: pose_v = params.object_pose_4; break;
+						case 4: pose_v = params.object_pose_5; break;
+						case 5: pose_v = params.object_pose_6; break;
+						case 6: pose_v = params.object_pose_7; break;
+						case 7: pose_v = params.object_pose_8; break;
+						case 8: pose_v = params.object_pose_9; break;
+						case 9: pose_v = params.object_pose_10; break;
+						default: throw std::runtime_error("Invalid pose index in respawn loop.");
+					}
+
+					geometry_msgs::msg::Pose pose;
+					pose.position.x = pose_v[0];
+					pose.position.y = pose_v[1];
+					pose.position.z = pose_v[2] + 0.5 * dims[2];
+
+					tf2::Quaternion q;
+					q.setRPY(pose_v[3], pose_v[4], pose_v[5]);
+					pose.orientation = tf2::toMsg(q);
+
+					obj.primitive_poses.push_back(pose);
+
+					planning_scene_msg.world.collision_objects.push_back(obj);
+				}
+
+				planning_scene_publisher->publish(planning_scene_msg);
+				rclcpp::sleep_for(std::chrono::milliseconds(500));
+
+				RCLCPP_INFO(LOGGER, "Objects respawned at original positions.");
+
+				// Reset the index to 0
+				object_idx = 0;
+			}
+
+
+
+			
+				
+				const std::string& object_id = params.object_names[object_idx];
+				RCLCPP_INFO(LOGGER, "Planning pick for object: %s", object_id.c_str());
+
+				// Create a fresh task instance
+				roarm_moveit_mtc_demo::PickPlaceTask pick_place_task("pick_place_task");
+
+				// Init for this object
+				if (!pick_place_task.init(node, params, object_id)) {
+					RCLCPP_ERROR(LOGGER, "Initialization failed for object: %s", object_id.c_str());
+					task_executed = false;
+					return;
+				}
+
+				if (pick_place_task.plan(params.max_solutions)) {
+					RCLCPP_INFO(LOGGER, "Planning succeeded. Executing...");
+					pick_place_task.execute();
+					RCLCPP_INFO(LOGGER, "Execution complete.");
+
+					// ✅ Remove the placed object here
+					RCLCPP_INFO(LOGGER, "Removing placed object: %s", object_id.c_str());
+
+					auto planning_scene_publisher = node->create_publisher<moveit_msgs::msg::PlanningScene>("planning_scene", 10);
+					rclcpp::sleep_for(std::chrono::milliseconds(1000));
+
+					moveit_msgs::msg::PlanningScene planning_scene_msg;
+					planning_scene_msg.is_diff = true;
+
+					moveit_msgs::msg::CollisionObject obj;
+					obj.id = object_id;
+					obj.header.frame_id = "world";
+					obj.operation = obj.REMOVE;
+					planning_scene_msg.world.collision_objects.push_back(obj);
+
+					planning_scene_publisher->publish(planning_scene_msg);
+					rclcpp::sleep_for(std::chrono::milliseconds(500));
+
+				} else {
+					RCLCPP_ERROR(LOGGER, "Planning failed for object: %s", object_id.c_str());
+				}
+
+				object_idx++; // Move to next object for next QR code
+
+				std::this_thread::sleep_for(std::chrono::seconds(delay_seconds));
+
+				auto pub = node->create_publisher<std_msgs::msg::String>("resume_scanner", 10);
+				std_msgs::msg::String resume_msg;
+				resume_msg.data = "resume";
+				pub->publish(resume_msg);
+
+				RCLCPP_INFO(LOGGER, "Ready for next QR code.");
+				task_executed = false;
+			});
+
+
+
+                task_thread.detach();
+            }
+        }
+    );
+
+    // Keep spinning thread alive
+    spinning_thread.join();
+    return 0;
+}

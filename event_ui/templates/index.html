@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Welcome to TechXchange</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <style>
+    #success-animation {
+      display: none;
+      text-align: center;
+      margin-top: 20px;
+    }
+    #success-animation img {
+      width: 80vw;        /* 80% of screen width */
+      max-width: 500px;   /* Never bigger than 500px */
+      height: auto;
+    }
+
+    h1 {
+      font-size: clamp(24px, 5vw, 80px); /* Min 24px, max 80px, scales with screen */
+      text-align: center;
+      color: white;
+      margin-top: 20px;
+      line-height: 1.2;
+    }
+
+
+    h2 {
+      text-align: center;
+      font-size: clamp(16px, 3vw, 48px);
+      margin-top: 10px;
+    }
+
+
+    /* Camera container for responsive scaling */
+    .camera-container {
+      width: 100%;
+      max-width: 100%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      overflow: hidden; /* Prevents scroll bars */
+      background: black; /* Optional: looks cleaner */
+    }
+
+    .camera-feed {
+      width: 100%;
+      height: auto;
+      max-height: 80vh; /* Keep some space for text */
+      aspect-ratio: 4 / 3; /* Keep camera's natural aspect ratio */
+      border: none;
+      object-fit: contain;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>
+    <img src="{{ url_for('static', filename='FulcrumDigitalLogo.jpg') }}" 
+         alt="Logo" 
+         style="height: 1em; vertical-align: middle; margin-right: 10px;">
+         Welcome to TechXchange
+  </h1>
+
+  <h2 id="guest">Please show your QR code to the camera</h2>
+
+  <div id="feed" class="camera-container">
+    <iframe class="camera-feed" 
+            src="http://localhost:8080/stream?topic=/camera/image_raw">
+    </iframe>
+  </div>
+
+  <div id="success-animation">
+    <img id="result-gif" src="{{ url_for('static', filename='success.gif') }}" alt="Result Animation">
+  </div>
+
+
+  <script>
+    const source = new EventSource('/events');
+
+    source.addEventListener('qr', function(event) {
+      // split only on the first colon to allow ":" in names
+      const raw = event.data || "";
+      const idx = raw.indexOf(':');
+      let status, name;
+      if (idx === -1) {
+        status = raw.trim();
+        name = '';
+      } else {
+        status = raw.slice(0, idx).trim();
+        name = raw.slice(idx + 1).trim();
+      }
+
+      const guestText = document.getElementById('guest');
+      const resultGif = document.getElementById('result-gif');
+
+      if (status === "success") {
+        guestText.textContent = `Welcome, ${name}!`;
+        resultGif.src = "{{ url_for('static', filename='success.gif') }}";
+        document.getElementById('feed').style.display = 'none';
+        document.getElementById('success-animation').style.display = 'block';
+        // Do NOT auto reset here — wait for resume event from ROS
+      } else if (status === "already") {
+        guestText.textContent = `${name}, you have already received your memento.`;
+        resultGif.src = "{{ url_for('static', filename='already_done.gif') }}";
+        document.getElementById('feed').style.display = 'none';
+        document.getElementById('success-animation').style.display = 'block';
+
+        // Auto-resume after 4 seconds
+        setTimeout(() => {
+          guestText.textContent = 'Please show your QR code to the camera';
+          document.getElementById('feed').style.display = 'block';
+          document.getElementById('success-animation').style.display = 'none';
+        }, 4000);
+      } else if (status === "unlisted") {
+        guestText.textContent = `Sorry, you are not on the guest list.`;
+        resultGif.src = "{{ url_for('static', filename='wrong.gif') }}";
+        document.getElementById('feed').style.display = 'none';
+        document.getElementById('success-animation').style.display = 'block';
+
+        // Auto-resume after 4 seconds
+        setTimeout(() => {
+          guestText.textContent = 'Please show your QR code to the camera';
+          document.getElementById('feed').style.display = 'block';
+          document.getElementById('success-animation').style.display = 'none';
+        }, 4000);
+      }
+    });
+
+    source.addEventListener('resume', function(event) {
+      document.getElementById('guest').textContent = 'Please show your QR code to the camera';
+      document.getElementById('feed').style.display = 'block';
+      document.getElementById('success-animation').style.display = 'none';
+    });
+  </script>
+
+
+
+
+</body>
+</html>
