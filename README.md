@@ -200,7 +200,3 @@ rm -rf build/<pkg_name> install/<pkg_name>
 ```
 
 ---
-
-## 📜 License  
-
-MIT © 2025 **harshilkp21**
