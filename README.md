@@ -10,7 +10,8 @@ When a guest scans their QR code (via the `event_ui/` folder):
 
 ## 📸 Simulation Preview  
 
-![Simulation](images/simulation.png)  
+<img width="709" height="638" alt="image" src="https://github.com/user-attachments/assets/b357d0e0-2d72-4806-9bed-74d217f5867b" />
+
 
 ---
 
